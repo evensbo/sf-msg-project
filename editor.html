@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Content Editor — Data for the Agentic Enterprise</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; }
+  .section  { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .section-title { font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .field    { margin-bottom: 14px; }
+  label     { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+  input[type="text"], textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 14px; color: #0f172a; outline: none; transition: border-color .2s; }
+  input[type="text"]:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+  textarea  { min-height: 80px; resize: vertical; font-family: inherit; }
+  .img-preview { margin-top: 6px; height: 32px; display: block; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px; background: #f8fafc; }
+  .card     { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 10px; }
+  .tabs     { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .tab      { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; border: 2px solid transparent; transition: all .15s; background: #f1f5f9; color: #64748b; }
+  .tab.active  { background: #0f172a; color: white; }
+  .tab-pane    { display: none; }
+  .tab-pane.active { display: block; }
+  .btn-save { background: linear-gradient(90deg,#f97316,#3b82f6); color: white; border: none; border-radius: 10px; padding: 12px 28px; font-weight: 800; font-size: 15px; cursor: pointer; transition: filter .15s; }
+  .btn-save:hover { filter: brightness(1.05); }
+  .btn-copy { background: #0f172a; color: white; border: none; border-radius: 10px; padding: 12px 28px; font-weight: 800; font-size: 15px; cursor: pointer; margin-left: 12px; transition: filter .15s; }
+  .btn-copy:hover { filter: brightness(1.2); }
+  .btn-reset { background: #ef4444; color: white; border: none; border-radius: 10px; padding: 12px 24px; font-weight: 700; font-size: 14px; cursor: pointer; margin-left: 12px; }
+  .notice   { background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 12px 16px; color: #065f46; font-size: 13px; margin-bottom: 20px; }
+  .notice strong { display: block; margin-bottom: 4px; }
+  .array-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+  .array-row input, .array-row textarea { flex: 1; }
+  .btn-del  { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; padding: 6px 10px; color: #b91c1c; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .btn-add  { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 6px; padding: 6px 12px; color: #1d4ed8; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+  .output-area { background: #0f172a; color: #a5f3fc; font-family: 'Courier New', monospace; font-size: 11px; border-radius: 8px; padding: 16px; max-height: 400px; overflow-y: auto; white-space: pre; }
+</style>
+</head>
+<body class="p-6">
+
+<div class="max-w-4xl mx-auto">
+  <div class="mb-8">
+    <h1 class="text-3xl font-black text-slate-900">Content Editor</h1>
+    <p class="text-slate-500 mt-1">Edit every text, image URL, and icon. Click <strong>Save &amp; Preview</strong> to apply changes.</p>
+  </div>
+
+  <div class="notice">
+    <strong>How it works</strong>
+    Edit any field, then click <strong>Save &amp; Preview</strong>. Your changes are saved to your browser (localStorage) and the preview opens automatically. To ship updates, click <strong>Copy JS</strong> and paste the output into <code>js/content.js</code>.
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tabs" id="tabBar"></div>
+
+  <!-- Tab panes built dynamically -->
+  <div id="tabPanes"></div>
+
+  <!-- Actions -->
+  <div class="flex items-center flex-wrap gap-3 mt-6">
+    <button class="btn-save" onclick="saveAndPreview()">💾 Save &amp; Preview</button>
+    <button class="btn-copy" onclick="copyJS()">📋 Copy JS</button>
+    <button class="btn-reset" onclick="resetToDefaults()">↺ Reset to Defaults</button>
+    <span id="saveMsg" class="text-green-600 font-bold text-sm opacity-0 transition-opacity">Saved!</span>
+  </div>
+
+  <!-- Output -->
+  <div class="mt-8 section" id="outputSection" style="display:none;">
+    <div class="section-title">Generated content.js</div>
+    <div class="output-area" id="outputArea"></div>
+  </div>
+
+</div>
+
+<script src="js/content.js"></script>
+<script>
+/* ============================================================
+   EDITOR ENGINE
+   Builds form from CONTENT, saves to localStorage, generates JS.
+   ============================================================ */
+
+const STORAGE_KEY = 'sfdemo_content_v1';
+
+/* load stored overrides on top of defaults */
+let DATA = JSON.parse(JSON.stringify(window.CONTENT));
+const stored = localStorage.getItem(STORAGE_KEY);
+if (stored) { try { DATA = JSON.parse(stored); } catch(e){} }
+
+/* ── Tab definitions ─────────────────────────────────── */
+const TABS = [
+  { id: 'meta',         label: '⚙️ Meta'         },
+  { id: 'intro',        label: '🏠 Intro'        },
+  { id: 'storyHeader',  label: '📌 Header'       },
+  { id: 'chapters',     label: '📖 Chapters'     },
+  { id: 'sourceCards',  label: '🗂 Source Cards'  },
+  { id: 'muleCard',     label: '🔗 MuleSoft'     },
+  { id: 'dataManagement', label: '📊 Data Mgmt'  },
+  { id: 'analytics',    label: '📈 Analytics'    },
+  { id: 'data360',      label: '🔵 Data 360'     },
+  { id: 'agentforce',   label: '🤖 Agentforce 1'  },
+  { id: 'agentforce2',  label: '🤖 Agentforce 2'  },
+  { id: 'sfApps',       label: '☁️ SF Apps'      },
+];
+
+/* ── Build tabs ──────────────────────────────────────── */
+const tabBar   = document.getElementById('tabBar');
+const tabPanes = document.getElementById('tabPanes');
+
+TABS.forEach((t, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (i === 0 ? ' active' : '');
+  btn.textContent = t.label;
+  btn.dataset.tab = t.id;
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('pane-' + t.id).classList.add('active');
+  });
+  tabBar.appendChild(btn);
+
+  const pane = document.createElement('div');
+  pane.className = 'tab-pane' + (i === 0 ? ' active' : '');
+  pane.id = 'pane-' + t.id;
+  pane.innerHTML = buildPane(t.id);
+  tabPanes.appendChild(pane);
+});
+
+/* ── Pane builders ───────────────────────────────────── */
+function buildPane(id) {
+  switch(id) {
+    case 'meta':         return buildMeta();
+    case 'intro':        return buildIntro();
+    case 'storyHeader':  return buildStoryHeader();
+    case 'chapters':     return buildChapters();
+    case 'sourceCards':  return buildSourceCards();
+    case 'muleCard':     return buildMuleCard();
+    case 'dataManagement': return buildDataManagement();
+    case 'analytics':    return buildAnalytics();
+    case 'data360':      return buildData360();
+    case 'agentforce':   return buildAgentforceCard('agentforce',  'Agentforce Card 1 (#card-agent)');
+    case 'agentforce2':  return buildAgentforceCard('agentforce2', 'Agentforce Card 2 (#card-agent-2)');
+    case 'sfApps':       return buildSfApps();
+    default: return '<p>No editor for this section yet.</p>';
+  }
+}
+
+/* ── Generic helpers ─────────────────────────────────── */
+function field(label, name, val, big) {
+  const tag   = big ? 'textarea' : 'input type="text"';
+  const close = big ? '</textarea>' : '/>';
+  const valAttr = big ? '' : `value="${esc(val)}"`;
+  return `
+    <div class="field">
+      <label>${label}</label>
+      ${big
+        ? `<textarea data-key="${name}">${esc(val)}</textarea>`
+        : `<input type="text" data-key="${name}" value="${esc(val)}"/>`
+      }
+    </div>`;
+}
+
+function imgField(label, nameUrl, nameAlt, urlVal, altVal) {
+  return `
+    <div class="field">
+      <label>${label} — Image URL</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" data-key="${nameUrl}" value="${esc(urlVal)}" style="flex:1;"/>
+        <button class="btn-del" type="button" onclick="clearIcon('${nameUrl}','${nameAlt}',this)" title="Remove icon">✕ Remove</button>
+      </div>
+      <img class="img-preview" src="${esc(urlVal)}" onerror="this.style.display='none'" onload="this.style.display='block'"/>
+    </div>
+    <div class="field">
+      <label>${label} — Alt text</label>
+      <input type="text" data-key="${nameAlt}" value="${esc(altVal)}"/>
+    </div>`;
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── Section builders ────────────────────────────────── */
+function buildMeta() {
+  const m = DATA.meta;
+  return `<div class="section">
+    <div class="section-title">🔧 Page Meta</div>
+    ${field('Page Title',  'meta.pageTitle',  m.pageTitle)}
+    ${field('Author',      'meta.author',     m.author)}
+    ${field('Prepared By', 'meta.preparedBy', m.preparedBy)}
+  </div>`;
+}
+
+function buildIntro() {
+  const i = DATA.intro;
+  let chips = i.chips.map((c,idx) => `
+    <div class="card">
+      <div class="card-title">Chip ${idx+1}</div>
+      ${field('Label',    `intro.chips.${idx}.label`,    c.label)}
+      ${field('CSS Class','intro.chips.${idx}.cssClass', c.cssClass)}
+    </div>`).join('');
+
+  let pillars = i.pillars.map((p,idx) => {
+    let logos = p.logos.map((l,li) => `
+      <div class="array-row" style="align-items:flex-start;gap:6px;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <input type="text" data-key="intro.pillars.${idx}.logos.${li}.src" value="${esc(l.src)}" placeholder="Image URL"/>
+          <input type="text" data-key="intro.pillars.${idx}.logos.${li}.alt" value="${esc(l.alt)}" placeholder="Alt text"/>
+          <img class="img-preview" src="${esc(l.src)}" style="height:28px;" onerror="this.style.display='none'"/>
+        </div>
+        <button class="btn-del" type="button" onclick="deletePillarLogo(${idx},${li})">✕ Remove</button>
+      </div>`).join('');
+    const tags = (p.logoTags || []);
+    let logoTagRows = tags.map((t,ti) => `
+      <div class="array-row">
+        <input type="text" data-key="intro.pillars.${idx}.logoTags.${ti}" value="${esc(t)}" placeholder="Tag label"/>
+        <button class="btn-del" type="button" onclick="deletePillarLogoTag(${idx},${ti})">✕</button>
+      </div>`).join('');
+    return `<div class="card">
+      <div class="card-title">Pillar ${idx+1}</div>
+      ${field('Title', `intro.pillars.${idx}.title`, p.title)}
+      <label>Logos</label>
+      <div id="logos-pillar-${idx}">${logos}</div>
+      <button class="btn-add" type="button" onclick="addPillarLogo(${idx})">+ Add Logo</button>
+      <label style="margin-top:10px;">Logo Tags (badges shown next to logos)</label>
+      <div id="logotags-pillar-${idx}">${logoTagRows}</div>
+      <button class="btn-add" type="button" onclick="addPillarLogoTag(${idx})">+ Add Tag</button>
+      ${field('Body (HTML)', `intro.pillars.${idx}.body`, p.body, true)}
+    </div>`;
+  }).join('');
+
+  let story = i.story.map((s,idx) => `
+    <div class="array-row">
+      <textarea data-key="intro.story.${idx}">${esc(s)}</textarea>
+    </div>`).join('');
+
+  return `<div class="section">
+    <div class="section-title">🏠 Intro Screen</div>
+    ${field('Kicker',   'intro.kicker',   i.kicker)}
+    ${field('Title',    'intro.title',    i.title)}
+    ${field('Subtitle (HTML)', 'intro.subtitle', i.subtitle, true)}
+    ${field('Note',     'intro.note',     i.note,    true)}
+    ${field('Start Button', 'intro.startBtn', i.startBtn)}
+    ${field('Back Button',  'intro.backBtn',  i.backBtn)}
+    <div class="field"><label>Story Paragraphs (HTML)</label>${story}</div>
+    <div class="field"><label>Journey Chips</label>${chips}</div>
+    <div class="field"><label>Pillars</label>${pillars}</div>
+  </div>`;
+}
+
+function buildStoryHeader() {
+  const sh = DATA.storyHeader;
+  const nw = sh.navWords;
+  return `<div class="section">
+    <div class="section-title">📌 Story Header</div>
+    ${field('Title',          'storyHeader.title',   sh.title)}
+    ${field('Title Highlight','storyHeader.titleHL', sh.titleHL)}
+    ${field('Subtitle template', 'storyHeader.subtitle', sh.subtitle)}
+    <div class="card"><div class="card-title">Nav Words</div>
+      ${field('Chaos',   'storyHeader.navWords.chaos',   nw.chaos)}
+      ${field('Trust',   'storyHeader.navWords.trust',   nw.trust)}
+      ${field('Context', 'storyHeader.navWords.context', nw.context)}
+      ${field('Action',  'storyHeader.navWords.action',  nw.action)}
+    </div>
+  </div>`;
+}
+
+function buildChapters() {
+  return DATA.chapters.map(ch => {
+    const idx = ch.id - 1;
+    const bodyFields = (ch.body||[]).map((b,i) => `
+      <div class="array-row" style="align-items:flex-start;">
+        <textarea data-key="chapters.${idx}.body.${i}" style="flex:1;">${esc(b)}</textarea>
+        <button class="btn-del" type="button" onclick="deleteChapterBodyPara(${idx},${i})">✕</button>
+      </div>`).join('');
+    return `
+      <div class="section">
+        <div class="section-title">📖 Chapter ${ch.id}: ${ch.title.replace(/<[^>]*>/g,'')}</div>
+        ${field('Title (HTML)',`chapters.${idx}.title`,ch.title)}
+        ${field('Chip Label',  `chapters.${idx}.chipLabel`,ch.chipLabel)}
+        ${field('Chip Class',  `chapters.${idx}.chipClass`,ch.chipClass)}
+        ${field('Tagline',     `chapters.${idx}.tagline`,  ch.tagline||'')}
+        ${field('Subtitle',    `chapters.${idx}.subtitle`, ch.subtitle||'')}
+        <div class="field"><label>Body Paragraphs (HTML)</label>
+          ${bodyFields}
+          <button class="btn-add" type="button" onclick="addChapterBodyPara(${idx})">+ Add Paragraph</button>
+        </div>
+        ${buildChapterExtras(ch, idx)}
+      </div>`;
+  }).join('');
+}
+
+function buildChapterExtras(ch, idx) {
+  switch(ch.id) {
+    case 1: return buildCh1Extras(ch, idx);
+    case 2: return buildCh2Extras(ch, idx);
+    case 3: return buildCh3Extras(ch, idx);
+    case 4: return buildCh4Extras(ch, idx);
+    case 5: return buildCh5Extras(ch, idx);
+    case 6: return buildCh6Extras(ch, idx);
+    case 7: return buildCh7Extras(ch, idx);
+    case 8: return buildCh8Extras(ch, idx);
+    default: return '';
+  }
+}
+
+function buildCh1Extras(ch, idx) {
+  const ib  = ch.infoBox  || {};
+  const ib2 = ch.infoBox2 || {};
+  const ibItems = (ib.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.infoBox.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'infoBox.items',${i})">✕</button>
+    </div>`).join('');
+  const ib2Items = (ib2.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.infoBox2.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'infoBox2.items',${i})">✕</button>
+    </div>`).join('');
+  return `
+    <div class="card">
+      <div class="card-title">Info Box — "What this looks like in practice"</div>
+      ${field('Title',`chapters.${idx}.infoBox.title`,ib.title||'')}
+      ${field('Intro (HTML)',`chapters.${idx}.infoBox.intro`,ib.intro||'',true)}
+      <div class="field"><label>Items (HTML)</label>
+        ${ibItems}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'infoBox.items')">+ Add Item</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Info Box 2 — "The hidden cost"</div>
+      ${field('Title',`chapters.${idx}.infoBox2.title`,ib2.title||'')}
+      <div class="field"><label>Items (HTML)</label>
+        ${ib2Items}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'infoBox2.items')">+ Add Item</button>
+      </div>
+    </div>
+    ${field('Closing Question',`chapters.${idx}.closingQ`,ch.closingQ||'',true)}
+    ${field('Closing Answer (HTML)',`chapters.${idx}.closingAns`,ch.closingAns||'',true)}`;
+}
+
+function buildCh2Extras(ch, idx) {
+  const steps = (ch.pipelineSteps||[]).map((step,i) => `
+    <div class="card">
+      <div class="card-title">Step ${i+1}</div>
+      ${field('Number',`chapters.${idx}.pipelineSteps.${i}.num`,step.num||'')}
+      ${field('Number CSS Class',`chapters.${idx}.pipelineSteps.${i}.numClass`,step.numClass||'')}
+      ${field('Title',`chapters.${idx}.pipelineSteps.${i}.title`,step.title||'')}
+      ${field('Description (HTML)',`chapters.${idx}.pipelineSteps.${i}.desc`,step.desc||'',true)}
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'pipelineSteps',${i})">✕ Remove Step</button>
+    </div>`).join('');
+  return `
+    <div class="card">
+      <div class="card-title">MDM Pipeline Steps</div>
+      ${steps}
+      <button class="btn-add" type="button" onclick="addChapterPipelineStep(${idx})">+ Add Step</button>
+    </div>
+    ${field('Result Line (HTML)',`chapters.${idx}.result`,ch.result||'',true)}`;
+}
+
+function buildCh3Extras(ch, idx) {
+  const ss = ch.shareStrategy || {};
+  const ssItems = (ss.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.shareStrategy.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'shareStrategy.items',${i})">✕</button>
+    </div>`).join('');
+  return `
+    <div class="card">
+      <div class="card-title">Share &amp; Consume Strategy Box</div>
+      ${field('Title',`chapters.${idx}.shareStrategy.title`,ss.title||'')}
+      ${field('Intro (HTML)',`chapters.${idx}.shareStrategy.intro`,ss.intro||'',true)}
+      <div class="field"><label>Items (HTML)</label>
+        ${ssItems}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'shareStrategy.items')">+ Add Item</button>
+      </div>
+    </div>
+    ${field("Robert's Story (HTML)",`chapters.${idx}.robertStory`,typeof ch.robertStory==='string'?ch.robertStory:'',true)}`;
+}
+
+function buildCh4Extras(ch, idx) {
+  const mb = ch.muleBox      || {};
+  const rs = ch.robertStory  || {};
+  const mbItems = (mb.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.muleBox.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'muleBox.items',${i})">✕</button>
+    </div>`).join('');
+  const rsItems = (rs.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.robertStory.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'robertStory.items',${i})">✕</button>
+    </div>`).join('');
+  return `
+    <div class="card">
+      <div class="card-title">MuleSoft Info Box</div>
+      ${field('Title',`chapters.${idx}.muleBox.title`,mb.title||'')}
+      <div class="field"><label>Items (HTML)</label>
+        ${mbItems}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'muleBox.items')">+ Add Item</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Robert's Story Box</div>
+      ${field('Title',`chapters.${idx}.robertStory.title`,rs.title||'')}
+      ${field('Intro (HTML)',`chapters.${idx}.robertStory.intro`,rs.intro||'',true)}
+      <div class="field"><label>Items (HTML)</label>
+        ${rsItems}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'robertStory.items')">+ Add Item</button>
+      </div>
+    </div>`;
+}
+
+function buildCh5Extras(ch, idx) {
+  const bb = ch.buildingBlocks || {};
+  const rs = ch.robertStory   || {};
+  const bbItems = (bb.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.buildingBlocks.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'buildingBlocks.items',${i})">✕</button>
+    </div>`).join('');
+  return `
+    <div class="card">
+      <div class="card-title">Building Blocks Box</div>
+      ${field('Title',`chapters.${idx}.buildingBlocks.title`,bb.title||'')}
+      <div class="field"><label>Items (HTML)</label>
+        ${bbItems}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'buildingBlocks.items')">+ Add Item</button>
+      </div>
+      ${field('Metadata Note (HTML)',`chapters.${idx}.buildingBlocks.metadata`,bb.metadata||'',true)}
+      ${field('Snowflake Note (HTML)',`chapters.${idx}.buildingBlocks.snowflake`,bb.snowflake||'',true)}
+    </div>
+    ${field('Snowflake Side Note (HTML)',`chapters.${idx}.snowflakeNote`,ch.snowflakeNote||'',true)}
+    <div class="card">
+      <div class="card-title">Robert's Story Box</div>
+      ${field('Title',`chapters.${idx}.robertStory.title`,rs.title||'')}
+      ${field('Body (HTML)',`chapters.${idx}.robertStory.body`,rs.body||'',true)}
+    </div>
+    ${field('Closing (HTML)',`chapters.${idx}.closing`,ch.closing||'',true)}`;
+}
+
+function buildCh6Extras(ch, idx) {
+  const cb = ch.contextBox   || {};
+  const rs = ch.robertStory  || {};
+  const cbItems = (cb.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.contextBox.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'contextBox.items',${i})">✕</button>
+    </div>`).join('');
+  return `
+    <div class="card">
+      <div class="card-title">Context &amp; Trust Box</div>
+      ${field('Title',`chapters.${idx}.contextBox.title`,cb.title||'')}
+      ${field('Intro (HTML)',`chapters.${idx}.contextBox.intro`,cb.intro||'',true)}
+      <div class="field"><label>Items (HTML)</label>
+        ${cbItems}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'contextBox.items')">+ Add Item</button>
+      </div>
+      ${field('Result',`chapters.${idx}.contextBox.result`,cb.result||'')}
+    </div>
+    <div class="card">
+      <div class="card-title">Robert's Story Box</div>
+      ${field('Title',`chapters.${idx}.robertStory.title`,rs.title||'')}
+      ${field('Body (HTML)',`chapters.${idx}.robertStory.body`,rs.body||'',true)}
+    </div>`;
+}
+
+function buildCh7Extras(ch, idx) {
+  const rs = ch.robertStory || {};
+  const rsItems = (rs.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.robertStory.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'robertStory.items',${i})">✕</button>
+    </div>`).join('');
+  return `
+    <div class="card">
+      <div class="card-title">Robert's Story Box</div>
+      ${field('Title',`chapters.${idx}.robertStory.title`,rs.title||'')}
+      ${field('Intro (HTML)',`chapters.${idx}.robertStory.intro`,rs.intro||'',true)}
+      <div class="field"><label>Items (HTML)</label>
+        ${rsItems}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'robertStory.items')">+ Add Item</button>
+      </div>
+    </div>`;
+}
+
+function buildCh8Extras(ch, idx) {
+  const mb = ch.muleBox      || {};
+  const ev = ch.evolutionBox || {};
+  const cl = ch.closing      || {};
+  const mbItems = (mb.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.muleBox.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'muleBox.items',${i})">✕</button>
+    </div>`).join('');
+  const evItems = (ev.items||[]).map((item,i) => `
+    <div class="array-row">
+      <textarea data-key="chapters.${idx}.evolutionBox.items.${i}">${esc(item)}</textarea>
+      <button class="btn-del" type="button" onclick="deleteChapterArrayItem(${idx},'evolutionBox.items',${i})">✕</button>
+    </div>`).join('');
+  return `
+    <div class="card">
+      <div class="card-title">MuleSoft Info Box</div>
+      ${field('Title',`chapters.${idx}.muleBox.title`,mb.title||'')}
+      <div class="field"><label>Items (HTML)</label>
+        ${mbItems}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'muleBox.items')">+ Add Item</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Evolution Box — "How the story evolves beyond CRM"</div>
+      ${field('Title',`chapters.${idx}.evolutionBox.title`,ev.title||'')}
+      ${field('Intro (HTML)',`chapters.${idx}.evolutionBox.intro`,ev.intro||'',true)}
+      <div class="field"><label>Items (HTML)</label>
+        ${evItems}
+        <button class="btn-add" type="button" onclick="addChapterStrItem(${idx},'evolutionBox.items')">+ Add Item</button>
+      </div>
+      ${field('Result',`chapters.${idx}.evolutionBox.result`,ev.result||'')}
+    </div>
+    <div class="card">
+      <div class="card-title">Closing Thought</div>
+      ${field('Title',`chapters.${idx}.closing.title`,cl.title||'')}
+      ${field('Body (HTML)',`chapters.${idx}.closing.body`,cl.body||'',true)}
+      ${field('Contact Line',`chapters.${idx}.closing.contact`,cl.contact||'')}
+    </div>`;
+}
+
+function buildSourceCards() {
+  return `<div class="section">
+    <div class="section-title">🗂 Source System Cards</div>
+    ${DATA.sourceCards.map((sc,i) => `
+    <div class="card">
+      <div class="card-title">${sc.label}</div>
+      ${field('Card Label', `sourceCards.${i}.label`, sc.label)}
+      ${field('Data Badge', `sourceCards.${i}.badge`, sc.badge)}
+      ${field('Entity ID (eid)', `sourceCards.${i}.eid`, sc.eid)}
+      ${imgField('Icon', `sourceCards.${i}.icon`, `sourceCards.${i}.iconAlt`, sc.icon, sc.iconAlt)}
+      ${field('Tooltip Title', `sourceCards.${i}.tooltip.title`, sc.tooltip.title)}
+      ${field('Tooltip Body',  `sourceCards.${i}.tooltip.body`,  sc.tooltip.body, true)}
+    </div>`).join('')}
+  </div>`;
+}
+
+function buildMuleCard() {
+  const mc = DATA.muleCard;
+  let items = mc.fabricItems.map((it,i) => `
+    <div class="array-row">
+      <textarea data-key="muleCard.fabricItems.${i}">${esc(it)}</textarea>
+    </div>`).join('');
+  return `<div class="section">
+    <div class="section-title">🔗 MuleSoft Card</div>
+    ${imgField('MuleSoft Icon', 'muleCard.icon', 'muleCard.iconAlt', mc.icon, mc.iconAlt)}
+    ${field('Card Label',     'muleCard.label',         mc.label)}
+    ${field('Sublabel',       'muleCard.sublabel',       mc.sublabel)}
+    ${field('App Int Label',  'muleCard.labelAppInt',    mc.labelAppInt)}
+    ${field('Fabric Title',   'muleCard.fabricTitle',    mc.fabricTitle)}
+    <div class="field"><label>Fabric Bullet Points (HTML)</label>${items}</div>
+    ${field('Tooltip Title',  'muleCard.tooltip.title',  mc.tooltip.title)}
+    ${field('Tooltip Body',   'muleCard.tooltip.body',   mc.tooltip.body, true)}
+  </div>`;
+}
+
+function buildDataManagement() {
+  const dm = DATA.dataManagement;
+  const pipe = dm.mdm.pipeline.map((p,i) => `
+    <div class="card">
+      <div class="card-title">Step ${i+1}</div>
+      ${field('Icon (emoji)', `dataManagement.mdm.pipeline.${i}.icon`,  p.icon)}
+      ${field('Title',        `dataManagement.mdm.pipeline.${i}.title`, p.title)}
+      ${field('Sub-label',    `dataManagement.mdm.pipeline.${i}.sub`,   p.sub)}
+    </div>`).join('');
+
+  return `<div class="section">
+    <div class="section-title">📊 Data Management Group</div>
+    ${imgField('Group Icon', 'dataManagement.groupIcon', 'dataManagement.groupIconAlt', dm.groupIcon, dm.groupIconAlt)}
+    ${field('Group Label', 'dataManagement.groupLabel', dm.groupLabel)}
+    <div class="card"><div class="card-title">Data Catalog</div>
+      ${field('Label',         'dataManagement.catalog.label',         dm.catalog.label)}
+      ${field('Sublabel',      'dataManagement.catalog.sublabel',      dm.catalog.sublabel)}
+      ${field('Tooltip Title', 'dataManagement.catalog.tooltip.title', dm.catalog.tooltip.title)}
+      ${field('Tooltip Body',  'dataManagement.catalog.tooltip.body',  dm.catalog.tooltip.body, true)}
+    </div>
+    <div class="card"><div class="card-title">Data Integration</div>
+      ${field('Label',         'dataManagement.integration.label',         dm.integration.label)}
+      ${field('Sublabel',      'dataManagement.integration.sublabel',      dm.integration.sublabel)}
+      ${field('Tooltip Title', 'dataManagement.integration.tooltip.title', dm.integration.tooltip.title)}
+      ${field('Tooltip Body',  'dataManagement.integration.tooltip.body',  dm.integration.tooltip.body, true)}
+    </div>
+    <div class="card"><div class="card-title">Data Quality</div>
+      ${field('Label',         'dataManagement.quality.label',         dm.quality.label)}
+      ${field('Sublabel',      'dataManagement.quality.sublabel',      dm.quality.sublabel)}
+      ${field('Tooltip Title', 'dataManagement.quality.tooltip.title', dm.quality.tooltip.title)}
+      ${field('Tooltip Body',  'dataManagement.quality.tooltip.body',  dm.quality.tooltip.body, true)}
+    </div>
+    <div class="card"><div class="card-title">MDM Hub</div>
+      ${field('Hub Badge Label', 'dataManagement.mdm.hubLabel', dm.mdm.hubLabel)}
+      ${field('Tooltip Title',   'dataManagement.mdm.tooltip.title', dm.mdm.tooltip.title)}
+      ${field('Tooltip What',    'dataManagement.mdm.tooltip.what',  dm.mdm.tooltip.what, true)}
+      ${field('Tooltip Function','dataManagement.mdm.tooltip.func',  dm.mdm.tooltip.func, true)}
+      <div class="field"><label>MDM Pipeline Steps</label>${pipe}</div>
+    </div>
+  </div>`;
+}
+
+function buildAnalytics() {
+  const an = DATA.analytics;
+  const sfIcons = an.snowflakeCard.icons.map((ic,i) => `
+    <div class="array-row" style="align-items:flex-start;gap:6px;">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+        <input type="text" data-key="analytics.snowflakeCard.icons.${i}.src" value="${esc(ic.src)}" placeholder="Image URL"/>
+        <input type="text" data-key="analytics.snowflakeCard.icons.${i}.alt" value="${esc(ic.alt)}" placeholder="Alt text"/>
+        <img class="img-preview" src="${esc(ic.src)}" style="height:28px;" onerror="this.style.display='none'"/>
+      </div>
+      <button class="btn-del" type="button" onclick="deleteAnalyticsIcon(${i})">✕ Remove</button>
+    </div>`).join('');
+
+  return `<div class="section">
+    <div class="section-title">📈 Analytics Column</div>
+    ${field('Column Label', 'analytics.labelAnalytics', an.labelAnalytics)}
+    <div class="card"><div class="card-title">Snowflake / Data Platforms Card</div>
+      <label>Platform Icons</label>
+      <div id="analytics-icons">${sfIcons}</div>
+      <button class="btn-add" type="button" onclick="addAnalyticsIcon()">+ Add Icon</button>
+      ${field('Label',         'analytics.snowflakeCard.label',         an.snowflakeCard.label)}
+      ${field('Sublabel',      'analytics.snowflakeCard.sublabel',      an.snowflakeCard.sublabel)}
+      ${field('Tooltip Title', 'analytics.snowflakeCard.tooltip.title', an.snowflakeCard.tooltip.title)}
+      ${field('Tooltip Body',  'analytics.snowflakeCard.tooltip.body',  an.snowflakeCard.tooltip.body, true)}
+    </div>
+    <div class="card"><div class="card-title">Tableau Card</div>
+      ${imgField('Tableau Icon', 'analytics.tableauCard.icon', 'analytics.tableauCard.iconAlt', an.tableauCard.icon, an.tableauCard.iconAlt)}
+      ${field('Label',         'analytics.tableauCard.label',         an.tableauCard.label)}
+      ${field('Tooltip Title', 'analytics.tableauCard.tooltip.title', an.tableauCard.tooltip.title)}
+      ${field('Tooltip Body',  'analytics.tableauCard.tooltip.body',  an.tableauCard.tooltip.body, true)}
+    </div>
+  </div>`;
+}
+
+function buildData360() {
+  const d = DATA.data360;
+  const nodes = d.graphNodes.map((n,i) => `
+    <div class="card">
+      <div class="card-title">Node: ${n.id}</div>
+      ${imgField(`Icon`, `data360.graphNodes.${i}.icon`, `data360.graphNodes.${i}.iconAlt`, n.icon, n.iconAlt||'')}
+      ${field('Table Header', `data360.graphNodes.${i}.tableHead`, n.tableHead)}
+    </div>`).join('');
+
+  return `<div class="section">
+    <div class="section-title">🔵 Data 360 Card</div>
+    ${imgField('Salesforce Icon', 'data360.icon', 'data360.iconAlt', d.icon, d.iconAlt)}
+    ${field('Card Label', 'data360.label', d.label)}
+    ${field('Description (HTML)', 'data360.desc', d.desc, true)}
+    ${field('Tooltip Title', 'data360.tooltip.title', d.tooltip.title)}
+    ${field('Tooltip Body',  'data360.tooltip.body',  d.tooltip.body, true)}
+    <div class="card"><div class="card-title">Graph Center Node</div>
+      ${field('Top Label',  'data360.graphCenter.topLabel',  d.graphCenter.topLabel)}
+      ${field('Name',       'data360.graphCenter.name',      d.graphCenter.name)}
+      ${field('UUID',       'data360.graphCenter.uuid',      d.graphCenter.uuid)}
+      ${field('Linked ID',  'data360.graphCenter.linkedId',  d.graphCenter.linkedId)}
+    </div>
+    <div class="field"><label>Satellite Nodes</label>${nodes}</div>
+  </div>`;
+}
+
+function buildAgentforceCard(key, title) {
+  const ag = DATA[key] || {};
+  const channels = (ag.channels || []).map((ch,i) => `
+    <div class="card">
+      <div class="card-title">Channel ${i+1}</div>
+      ${field('Icon (emoji)', `${key}.channels.${i}.icon`,  ch.icon)}
+      ${field('Label',        `${key}.channels.${i}.label`, ch.label)}
+      ${field('Title attr',   `${key}.channels.${i}.title`, ch.title)}
+      <button class="btn-del" type="button" onclick="deleteAgentChannel('${key}',${i})">✕ Remove</button>
+    </div>`).join('');
+
+  const zoneField = key === 'agentforce'
+    ? field('Autonomous Zone Label', `${key}.autonomousZoneLabel`, ag.autonomousZoneLabel || '')
+    : '';
+
+  return `<div class="section">
+    <div class="section-title">🤖 ${title}</div>
+    ${imgField('Icon', `${key}.icon`, `${key}.iconAlt`, ag.icon || '', ag.iconAlt || '')}
+    ${field('Card Label',   `${key}.label`,      ag.label      || '')}
+    ${field('Atlas Label',  `${key}.atlasLabel`, ag.atlasLabel || '')}
+    ${field('Trust Label',  `${key}.trustLabel`, ag.trustLabel || '')}
+    ${field('Channel Section Label', `${key}.channelLabel`, ag.channelLabel || '')}
+    ${zoneField}
+    <div class="card"><div class="card-title">Tooltip</div>
+      ${field('Title',       `${key}.tooltip.title`,       (ag.tooltip||{}).title       || '')}
+      ${field('Atlas Engine',`${key}.tooltip.atlasEngine`, (ag.tooltip||{}).atlasEngine || '', true)}
+      ${field('Trust Layer', `${key}.tooltip.trustLayer`,  (ag.tooltip||{}).trustLayer  || '', true)}
+      ${field('Vendor URL',  `${key}.tooltip.vendorUrl`,   (ag.tooltip||{}).vendorUrl   || '')}
+      ${field('Vendor Label',`${key}.tooltip.vendorLabel`, (ag.tooltip||{}).vendorLabel || '')}
+    </div>
+    <div class="field">
+      <label>Channels</label>
+      ${channels}
+      <button class="btn-add" type="button" onclick="addAgentChannel('${key}')">+ Add Channel</button>
+    </div>
+  </div>`;
+}
+
+function buildSfApps() {
+  const sa = DATA.sfApps;
+  const apps = sa.apps.map((a,i) => `
+    <div class="array-row">
+      <input type="text" data-key="sfApps.apps.${i}.icon"  value="${esc(a.icon)}"  placeholder="emoji/icon" style="max-width:80px;"/>
+      <input type="text" data-key="sfApps.apps.${i}.label" value="${esc(a.label)}" placeholder="Label"/>
+    </div>`).join('');
+
+  return `<div class="section">
+    <div class="section-title">☁️ Salesforce Apps Bar</div>
+    ${imgField('SF Icon', 'sfApps.icon', 'sfApps.iconAlt', sa.icon, sa.iconAlt)}
+    ${field('Bar Label', 'sfApps.label', sa.label)}
+    <div class="field"><label>Apps (icon + label)</label>${apps}</div>
+  </div>`;
+}
+
+/* ── Collect all form values ─────────────────────────── */
+function collectValues() {
+  const out = JSON.parse(JSON.stringify(DATA));
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const keys = el.dataset.key.split('.');
+    let ptr = out;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const k = keys[i];
+      if (ptr[k] === undefined) ptr[k] = isNaN(keys[i+1]) ? {} : [];
+      ptr = ptr[k];
+    }
+    ptr[keys[keys.length - 1]] = el.value;
+  });
+  return out;
+}
+
+/* ── Save & Preview ──────────────────────────────────── */
+function saveAndPreview() {
+  DATA = collectValues();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+
+  /* inject saved data into the preview window's CONTENT */
+  const saved = DATA;
+  const preview = window.open('index.html', '_preview');
+  preview.addEventListener('load', () => {
+    preview.CONTENT = saved;
+  }, { once: true });
+
+  const msg = document.getElementById('saveMsg');
+  msg.style.opacity = '1';
+  setTimeout(() => msg.style.opacity = '0', 2000);
+}
+
+/* ── Copy JS ─────────────────────────────────────────── */
+function copyJS() {
+  DATA = collectValues();
+  const js = `/* Auto-generated by editor.html — paste into js/content.js */\nwindow.CONTENT = ${JSON.stringify(DATA, null, 2)};\n`;
+  document.getElementById('outputArea').textContent = js;
+  document.getElementById('outputSection').style.display = 'block';
+  navigator.clipboard.writeText(js).then(() => alert('Copied to clipboard! Paste into js/content.js'));
+}
+
+/* ── Reset ───────────────────────────────────────────── */
+function resetToDefaults() {
+  if (!confirm('Reset all edits to the original defaults?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  DATA = JSON.parse(JSON.stringify(window.CONTENT));
+  location.reload();
+}
+
+/* ── Live image preview on URL change ───────────────── */
+document.addEventListener('input', e => {
+  if (e.target.dataset.key?.endsWith('.src') || e.target.dataset.key?.endsWith('.icon')) {
+    const preview = e.target.parentElement?.querySelector('img.img-preview') || e.target.nextElementSibling;
+    if (preview && preview.tagName === 'IMG') preview.src = e.target.value;
+  }
+});
+
+/* ── Clear a single icon (source cards / mule / etc.) ── */
+function clearIcon(keyUrl, keyAlt, btn) {
+  DATA = collectValues();
+  setNestedKey(DATA, keyUrl, '');
+  setNestedKey(DATA, keyAlt, '');
+  const activeTab = document.querySelector('.tab.active').dataset.tab;
+  rerenderPane(activeTab);
+}
+
+/* ── Delete one logo from a pillar ─────────────────── */
+function deletePillarLogo(pillarIdx, logoIdx) {
+  DATA = collectValues();
+  DATA.intro.pillars[pillarIdx].logos.splice(logoIdx, 1);
+  rerenderPane('intro');
+}
+
+/* ── Add blank logo to a pillar ─────────────────────── */
+function addPillarLogo(pillarIdx) {
+  DATA = collectValues();
+  DATA.intro.pillars[pillarIdx].logos.push({ src: '', alt: '' });
+  rerenderPane('intro');
+}
+
+/* ── Delete / add logo tags on a pillar ─────────────── */
+function deletePillarLogoTag(pillarIdx, tagIdx) {
+  DATA = collectValues();
+  DATA.intro.pillars[pillarIdx].logoTags.splice(tagIdx, 1);
+  rerenderPane('intro');
+}
+
+function addPillarLogoTag(pillarIdx) {
+  DATA = collectValues();
+  if (!DATA.intro.pillars[pillarIdx].logoTags) DATA.intro.pillars[pillarIdx].logoTags = [];
+  DATA.intro.pillars[pillarIdx].logoTags.push('');
+  rerenderPane('intro');
+}
+
+/* ── Delete / add agentforce channels ───────────────── */
+function deleteAgentChannel(key, idx) {
+  DATA = collectValues();
+  DATA[key].channels.splice(idx, 1);
+  rerenderPane(key);
+}
+
+function addAgentChannel(key) {
+  DATA = collectValues();
+  if (!DATA[key].channels) DATA[key].channels = [];
+  DATA[key].channels.push({ icon: '', label: '', title: '' });
+  rerenderPane(key);
+}
+
+/* ── Chapter body paragraphs ────────────────────────── */
+function deleteChapterBodyPara(chIdx, paraIdx) {
+  DATA = collectValues();
+  DATA.chapters[chIdx].body.splice(paraIdx, 1);
+  rerenderPane('chapters');
+}
+
+function addChapterBodyPara(chIdx) {
+  DATA = collectValues();
+  if (!DATA.chapters[chIdx].body) DATA.chapters[chIdx].body = [];
+  DATA.chapters[chIdx].body.push('');
+  rerenderPane('chapters');
+}
+
+/* ── Chapter nested string-array items ──────────────── */
+function deleteChapterArrayItem(chIdx, dotPath, itemIdx) {
+  DATA = collectValues();
+  const keys = dotPath.split('.');
+  let ptr = DATA.chapters[chIdx];
+  for (let i = 0; i < keys.length - 1; i++) ptr = ptr[keys[i]];
+  ptr[keys[keys.length - 1]].splice(itemIdx, 1);
+  rerenderPane('chapters');
+}
+
+function addChapterStrItem(chIdx, dotPath) {
+  DATA = collectValues();
+  const keys = dotPath.split('.');
+  let ptr = DATA.chapters[chIdx];
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (!ptr[keys[i]]) ptr[keys[i]] = {};
+    ptr = ptr[keys[i]];
+  }
+  const last = keys[keys.length - 1];
+  if (!ptr[last]) ptr[last] = [];
+  ptr[last].push('');
+  rerenderPane('chapters');
+}
+
+function addChapterPipelineStep(chIdx) {
+  DATA = collectValues();
+  if (!DATA.chapters[chIdx].pipelineSteps) DATA.chapters[chIdx].pipelineSteps = [];
+  DATA.chapters[chIdx].pipelineSteps.push({ num: '', numClass: '', title: '', desc: '' });
+  rerenderPane('chapters');
+}
+
+/* ── Delete / add analytics platform icons ──────────── */
+function deleteAnalyticsIcon(idx) {
+  DATA = collectValues();
+  DATA.analytics.snowflakeCard.icons.splice(idx, 1);
+  rerenderPane('analytics');
+}
+
+function addAnalyticsIcon() {
+  DATA = collectValues();
+  DATA.analytics.snowflakeCard.icons.push({ src: '', alt: '' });
+  rerenderPane('analytics');
+}
+
+function rerenderPane(tabId) {
+  const pane = document.getElementById('pane-' + tabId);
+  const html = buildPane(tabId);
+  pane.textContent = '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  while (tmp.firstChild) pane.appendChild(tmp.firstChild);
+}
+
+/* ── Utility: set a value at a dot-path in an object ── */
+function setNestedKey(obj, path, value) {
+  const keys = path.split('.');
+  let ptr = obj;
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (ptr[keys[i]] === undefined) ptr[keys[i]] = {};
+    ptr = ptr[keys[i]];
+  }
+  ptr[keys[keys.length - 1]] = value;
+}
+</script>
+</body>
+</html>

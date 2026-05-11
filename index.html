@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="author" content=""/>
+<title></title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+        colors: {
+          deepNavy:        '#0f172a',
+          electricBlue:    '#3b82f6',
+          brightCyan:      '#06b6d4',
+          energeticOrange: '#f97316',
+          snowflakeBlue:   '#29b5e8',
+          mulePink:        '#a80232',
+          slateLight:      '#f8fafc',
+          successGreen:    '#10b981',
+          agentPurple:     '#7c3aed',
+          goldenYellow:    '#f59e0b',
+        },
+        boxShadow: {
+          'glow':   '0 0 25px rgba(59,130,246,0.4)',
+          'card':   '0 10px 15px -3px rgba(0,0,0,0.1)',
+          'circle': '0 20px 50px -12px rgba(59,130,246,0.25)',
+        },
+      }
+    }
+  }
+</script>
+
+<link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+
+<!-- Back button (text set by app.js) -->
+<button id="backToIntroBtn" class="back-intro-btn" type="button"></button>
+
+<div class="app-shell" id="app-shell">
+
+  <!-- ══════════════════════════════════════════════════════
+       INTRO SCREEN  (content injected by app.js)
+  ══════════════════════════════════════════════════════ -->
+  <section class="intro-screen" id="intro-screen">
+    <div class="intro-wrap">
+      <div class="intro-kicker"></div>
+      <h1 class="intro-title"></h1>
+      <div class="title-underline"></div>
+      <p class="intro-subtitle"></p>
+      <div aria-label="Journey stages" class="intro-chips"></div>
+      <div class="intro-story"></div>
+      <div aria-label="Three pillars" class="intro-pillars"></div>
+      <div class="intro-note"></div>
+      <button aria-label="Start the story" class="intro-start-btn" id="startBtn"></button>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       STORY SCREEN
+  ══════════════════════════════════════════════════════ -->
+  <div class="story-screen" id="story-screen">
+    <div class="scrolly-container">
+
+      <!-- ── Narrative (left) ──────────────────────────── -->
+      <div class="narrative-column" id="narrativeCol">
+
+        <!-- Sticky header -->
+        <div class="p-8 pb-4 sticky top-0 bg-white z-50 border-b">
+          <h1 class="text-xl font-bold text-deepNavy"></h1>
+          <p class="text-sm text-slate-500 mt-1 font-medium"></p>
+          <p class="text-[10px] text-slate-400 mt-2 font-mono"></p>
+        </div>
+
+        <!-- Chapters (content injected by app.js) -->
+        <div class="step-block active" data-step="1" id="step-1"></div>
+        <div class="step-block"        data-step="2" id="step-2"></div>
+        <div class="step-block"        data-step="3" id="step-3"></div>
+        <div class="step-block"        data-step="4" id="step-4"></div>
+        <div class="step-block"        data-step="5" id="step-5"></div>
+        <div class="step-block"        data-step="6" id="step-6"></div>
+        <div class="step-block"        data-step="7" id="step-7"></div>
+        <div class="step-block"        data-step="8" id="step-8"></div>
+
+        <!-- Nav buttons -->
+        <div class="nav-controls">
+          <button class="nav-btn" onclick="scrollToStep(-1)">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+          </button>
+          <button class="nav-btn" onclick="scrollToStep(1)">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+          </button>
+        </div>
+      </div><!-- /narrative-column -->
+
+      <!-- ── Visual (right, sticky) ────────────────────── -->
+      <div class="visual-column">
+        <div class="shelf-container">
+          <canvas id="connectorCanvas"></canvas>
+          <svg id="fabricLinkSvg" class="fabric-link-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <path id="fabricLinkPath" d=""></path>
+          </svg>
+
+          <!-- SHELF TOP — Source system cards -->
+          <div class="shelf-top z-20 relative">
+
+            <!-- Source context tooltip -->
+            <div class="absolute -top-24 left-0 w-full text-center opacity-0 transition-opacity duration-500 pointer-events-none z-50" id="source-context-text">
+              <div class="bg-white/95 backdrop-blur border border-slate-300 text-slate-700 text-[10px] p-3 rounded-lg shadow-md inline-block max-w-lg mx-auto">
+                <strong class="text-deepNavy block mb-1"></strong>
+                <!-- body injected via innerHTML in app.js -->
+              </div>
+            </div>
+
+            <!-- SAP -->
+            <div class="tech-card border-l-4 border-slate-500 group" id="src-sap">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-sm"></span>
+                <img class="w-6 h-6 object-contain" src="" alt=""/>
+              </div>
+              <div class="data-badge"></div>
+              <div class="eid-badge" id="badge-sap"></div>
+              <div class="golden-badge" id="gold-sap">E-999</div>
+              <div class="hover-tooltip tooltip-bottom">
+                <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                <p class="mb-2"></p>
+              </div>
+            </div>
+
+            <!-- SFDC -->
+            <div class="tech-card border-l-4 border-blue-500 group" id="src-sfdc">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-sm"></span>
+                <img class="w-6 h-6 object-contain" src="" alt=""/>
+              </div>
+              <div class="data-badge"></div>
+              <div class="eid-badge" id="badge-sfdc"></div>
+              <div class="golden-badge" id="gold-sfdc">E-999</div>
+              <div class="hover-tooltip tooltip-bottom">
+                <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                <p class="mb-2"></p>
+              </div>
+            </div>
+
+            <!-- Marketo -->
+            <div class="tech-card border-l-4 border-purple-500 group" id="src-mkto">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-sm"></span>
+                <img class="w-6 h-6 object-contain" src="" alt=""/>
+              </div>
+              <div class="data-badge"></div>
+              <div class="eid-badge" id="badge-mkto"></div>
+              <div class="golden-badge" id="gold-mkto">E-999</div>
+              <div class="hover-tooltip tooltip-bottom">
+                <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                <p class="mb-2"></p>
+              </div>
+            </div>
+
+            <!-- ServiceNow -->
+            <div class="tech-card border-l-4 border-green-600 group" id="src-snow">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-sm"></span>
+                <img class="w-6 h-6 object-contain" src="" alt=""/>
+              </div>
+              <div class="data-badge"></div>
+              <div class="eid-badge" id="badge-snow"></div>
+              <div class="golden-badge" id="gold-snow">E-999</div>
+              <div class="hover-tooltip tooltip-bottom">
+                <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                <p class="mb-2"></p>
+              </div>
+            </div>
+
+            <!-- Legacy / IBM -->
+            <div class="tech-card border-l-4 border-slate-700 group" id="src-legacy">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-sm"></span>
+                <img class="w-6 h-6 object-contain" src="" alt=""/>
+              </div>
+              <div class="data-badge"></div>
+              <div class="eid-badge" id="badge-legacy"></div>
+              <div class="golden-badge" id="gold-legacy">E-999</div>
+              <div class="hover-tooltip tooltip-bottom">
+                <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                <p class="mb-2"></p>
+              </div>
+            </div>
+
+          </div><!-- /shelf-top -->
+
+          <!-- SHELF MIDDLE — MuleSoft | Data Management | Analytics -->
+          <div class="shelf-middle z-20">
+
+            <!-- App Integration column -->
+            <div class="col-app-int">
+              <div class="text-xs text-slate-400 font-bold uppercase mb-2 text-center opacity-0 transition-opacity duration-500" id="label-app-int"></div>
+              <div class="tech-card border-2 border-mulePink text-center p-4 group" id="card-mule">
+                <img class="w-8 h-8 mx-auto mb-2" src="" alt=""/>
+                <div class="font-bold text-sm"></div>
+                <div class="text-xs text-slate-500"></div>
+                <div class="mule-fabric-extra" id="muleFabricExtra">
+                  <div class="mt-3 pt-3 border-t border-slate-200 text-left text-xs leading-snug">
+                    <div class="font-semibold text-slate-800"></div>
+                    <ul class="mt-1 list-disc pl-4 text-slate-600 space-y-0.5">
+                      <li></li><li></li><li></li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="hover-tooltip tooltip-right">
+                  <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                  <p class="mb-2"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Governance / Data Management column -->
+            <div class="col-gov h-full flex flex-col justify-center">
+              <div class="tech-card border-2 border-indigo-200 bg-slate-50 shadow-sm p-3 w-full flex flex-row gap-2 relative items-stretch" id="card-dm-group">
+                <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-100 text-indigo-800 text-sm font-bold px-3 py-0.5 rounded border border-indigo-200 z-40 whitespace-nowrap flex items-center gap-1">
+                  <img class="w-6 h-6 object-contain" src="" alt=""/>
+                </div>
+
+                <div class="w-1/2 flex flex-col gap-2 justify-center">
+                  <div class="tech-card border-2 border-orange-400 shadow-sm p-2 flex flex-col justify-center items-center text-center h-1/3 bg-white group" id="card-catalog">
+                    <div class="text-[10px] font-bold text-orange-600"></div>
+                    <div class="text-[9px] text-slate-400"></div>
+                    <div class="hover-tooltip tooltip-right" style="left:110%;top:-50px;width:180px;">
+                      <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                      <p class="mb-2"></p>
+                    </div>
+                  </div>
+
+                  <div class="tech-card border-2 border-orange-400 shadow-sm p-2 flex flex-col justify-center items-center text-center h-1/3 bg-white group" id="card-di">
+                    <div class="text-[10px] font-bold text-orange-600"></div>
+                    <div class="text-[9px] text-slate-400"></div>
+                    <div class="hover-tooltip tooltip-right" style="left:110%;top:-50px;width:180px;">
+                      <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                      <p class="mb-2"></p>
+                    </div>
+                  </div>
+
+                  <div class="tech-card border-2 border-orange-400 shadow-sm p-2 flex flex-col justify-center items-center text-center h-1/3 bg-white group" id="card-dq">
+                    <div class="text-[10px] font-bold text-orange-600"></div>
+                    <div class="text-[9px] text-slate-400"></div>
+                    <div class="hover-tooltip tooltip-right" style="left:110%;top:-50px;width:180px;">
+                      <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                      <p class="mb-2"></p>
+                    </div>
+                  </div>
+                </div><!-- /left half -->
+
+                <!-- MDM Hub -->
+                <div class="tech-card border-2 border-brightCyan shadow-glow p-3 w-1/2 flex flex-col justify-center relative bg-white group" id="card-mdm">
+                  <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-brightCyan text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap z-50"></div>
+                  <div class="hover-tooltip tooltip-top" style="width:220px;margin-bottom:20px;">
+                    <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                    <p class="mb-2"><strong>What it is:</strong> <span id="mdm-what"></span></p>
+                    <p class="mb-2"><strong>Function:</strong> <span id="mdm-func"></span></p>
+                  </div>
+                  <div class="mdm-pipeline mt-3 flex flex-col gap-1 w-full">
+                    <div class="pipeline-step flex items-center gap-2 p-1 bg-slate-50 border border-slate-200 rounded" id="pipe-1">
+                      <span class="pipe-icon text-sm"></span>
+                      <div><span class="font-bold block text-xs text-deepNavy"></span><span class="text-[10px] text-slate-400 block"></span></div>
+                    </div>
+                    <div class="pipeline-step flex items-center gap-2 p-1 bg-slate-50 border border-slate-200 rounded" id="pipe-2">
+                      <span class="pipe-icon text-sm"></span>
+                      <div><span class="font-bold block text-xs text-deepNavy"></span><span class="text-[10px] text-slate-400 block"></span></div>
+                    </div>
+                    <div class="pipeline-step flex items-center gap-2 p-1 bg-slate-50 border border-slate-200 rounded" id="pipe-3">
+                      <span class="pipe-icon text-sm"></span>
+                      <div><span class="font-bold block text-xs text-deepNavy"></span><span class="text-[10px] text-slate-400 block"></span></div>
+                    </div>
+                    <div class="pipeline-step flex items-center gap-2 p-1 bg-slate-50 border border-slate-200 rounded" id="pipe-4">
+                      <span class="pipe-icon text-sm"></span>
+                      <div><span class="font-bold block text-xs text-deepNavy"></span><span class="text-[10px] text-slate-400 block"></span></div>
+                    </div>
+                    <div class="pipeline-step golden-record-final border-green-200 justify-center font-bold text-[10px] p-1 mt-1 rounded" id="pipe-5"></div>
+                  </div>
+                </div><!-- /MDM -->
+              </div>
+            </div><!-- /col-gov -->
+
+            <!-- Analytics column -->
+            <div class="col-analytics">
+              <div class="text-xs text-slate-400 font-bold uppercase mb-2 text-center opacity-0 transition-opacity duration-500" id="label-analytics"></div>
+
+              <div class="tech-card border-2 border-snowflakeBlue text-center p-4 group" id="card-snowflake">
+                <div class="flex justify-center gap-2 mb-2">
+                  <img class="w-6 h-6 object-contain" src="" alt=""/>
+                </div>
+                <div class="font-bold text-sm"></div>
+                <div class="text-xs text-slate-500"></div>
+                <div class="golden-badge hidden" id="badge-snow-analytic">ID: E-999</div>
+                <div class="hover-tooltip tooltip-top">
+                  <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                  <p class="mb-2"></p>
+                </div>
+              </div>
+
+              <div class="tech-card border-2 border-blue-400 text-center p-1.5 mt-3 group w-3/4 mx-auto" id="card-tableau">
+                <img class="w-8 h-8 mx-auto mb-1 object-contain" src="" alt=""/>
+                <div class="font-bold text-[10px] text-deepNavy"></div>
+                <div class="hover-tooltip tooltip-top">
+                  <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                  <p class="mb-2"></p>
+                </div>
+              </div>
+            </div><!-- /col-analytics -->
+
+          </div><!-- /shelf-middle -->
+
+          <!-- SHELF BOTTOM — Data 360, Agentforce, SF Apps -->
+          <div class="shelf-bottom z-20">
+
+            <!-- Data 360 -->
+            <div class="tech-card border-2 border-electricBlue w-full flex flex-col justify-start relative bg-white group" id="card-data360" style="min-height:230px;">
+              <div class="w-full flex justify-between items-start p-3 z-20">
+                <div class="flex items-center gap-2 shrink-0">
+                  <img class="w-4 h-4" src="" alt=""/>
+                  <span class="font-bold text-sm text-deepNavy"></span>
+                </div>
+                <div class="w-3/4 text-right text-sm text-slate-600 font-medium leading-snug ml-2"></div>
+              </div>
+              <div class="hover-tooltip tooltip-top" style="bottom:100%;width:200px;">
+                <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                <p class="mb-2"></p>
+              </div>
+              <div class="graph-container flex-grow w-full relative" id="graphAnimation" style="min-height:170px;">
+                <svg class="graph-svg" id="graphSvg"></svg>
+                <div class="graph-center" id="g-center">
+                  <div class="text-[8px] text-white opacity-80"></div>
+                  <div class="font-bold text-white text-base mb-0.5"></div>
+                  <div class="text-[9px] text-brightCyan font-bold mb-1"></div>
+                  <div class="bg-amber-100 text-amber-700 border border-amber-400 px-1.5 py-0.5 rounded text-[8px] font-bold shadow-sm whitespace-nowrap"></div>
+                </div>
+
+                <!-- Graph nodes (positioned via inline style from content.js graphNodes) -->
+                <div class="node-branch floating delay-1" id="g-sap" style="top:15%;left:50%;transform:translateX(-50%);">
+                  <div class="sat-node flex flex-col items-center justify-center w-[55px] h-[55px] bg-white rounded-full border-2 border-slate-300 shadow-md relative z-40 overflow-visible">
+                    <img class="w-8 h-8 object-contain" src="" alt=""/>
+                    <div class="absolute -right-1 -top-1 w-3 h-3 bg-green-400 border border-white rounded-full shadow-sm z-50"></div>
+                  </div>
+                  <div class="data-table" id="t-sap" style="top:60px;left:-35px;"><div class="dt-head"></div></div>
+                </div>
+                <div class="node-branch floating delay-2" id="g-sfdc" style="top:30%;right:5%;">
+                  <div class="sat-node flex flex-col items-center justify-center w-[55px] h-[55px] bg-white rounded-full border-2 border-slate-300 shadow-md relative z-40 overflow-visible">
+                    <img class="w-8 h-8 object-contain" src="" alt=""/>
+                    <div class="absolute -right-1 -top-1 w-3 h-3 bg-green-400 border border-white rounded-full shadow-sm z-50"></div>
+                  </div>
+                  <div class="data-table" id="t-sfdc" style="left:-85px;top:-10px;"><div class="dt-head"></div></div>
+                </div>
+                <div class="node-branch floating delay-3" id="g-mkto" style="bottom:30%;left:5%;">
+                  <div class="sat-node flex flex-col items-center justify-center w-[55px] h-[55px] bg-white rounded-full border-2 border-slate-300 shadow-md relative z-40 overflow-visible">
+                    <img class="w-8 h-8 object-contain" src="" alt=""/>
+                    <div class="absolute -right-1 -top-1 w-3 h-3 bg-green-400 border border-white rounded-full shadow-sm z-50"></div>
+                  </div>
+                  <div class="data-table" id="t-mkto" style="left:55px;top:-10px;"><div class="dt-head"></div></div>
+                </div>
+                <div class="node-branch floating delay-4" id="g-snow" style="bottom:15%;right:20%;">
+                  <div class="sat-node flex flex-col items-center justify-center w-[55px] h-[55px] bg-white rounded-full border-2 border-slate-300 shadow-md relative z-40 overflow-visible">
+                    <img class="w-8 h-8 object-contain" src="" alt=""/>
+                    <div class="absolute -right-1 -top-1 w-3 h-3 bg-green-400 border border-white rounded-full shadow-sm z-50"></div>
+                  </div>
+                  <div class="data-table" id="t-snow" style="left:-85px;top:-10px;"><div class="dt-head"></div></div>
+                </div>
+                <div class="node-branch floating delay-5" id="g-leg" style="top:15%;right:20%;">
+                  <div class="sat-node flex flex-col items-center justify-center w-[55px] h-[55px] bg-white rounded-full border-2 border-slate-300 shadow-md relative z-40 overflow-visible">
+                    <img class="w-8 h-8 object-contain" src="" alt=""/>
+                    <div class="absolute -right-1 -top-1 w-3 h-3 bg-green-400 border border-white rounded-full shadow-sm z-50"></div>
+                  </div>
+                  <div class="data-table" id="t-leg" style="left:-85px;top:-10px;"><div class="dt-head"></div></div>
+                </div>
+
+              </div><!-- /graphAnimation -->
+            </div><!-- /card-data360 -->
+
+            <!-- Agentforce row (two side-by-side cards) -->
+            <div class="agents-row">
+
+              <!-- Agentforce card 1 -->
+              <div class="tech-card border-2 border-agentPurple flex flex-col items-center justify-between relative bg-white group p-1.5 pt-3" id="card-agent" style="min-height:80px;">
+                <div class="absolute -top-4 left-3 flex items-center gap-1 bg-white px-2 py-0.5 rounded-full border border-agentPurple shadow-sm z-10">
+                  <img class="w-7 h-7 object-contain" src="" alt=""/>
+                  <span class="font-bold text-[12px] text-agentPurple pr-1"></span>
+                </div>
+                <div class="hover-tooltip tooltip-top" style="bottom:100%;width:200px;">
+                  <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                  <p class="mb-2"></p>
+                  <p class="mb-2"></p>
+                  <a class="text-blue-300 underline" href="" target="_blank"></a>
+                </div>
+                <div class="flex flex-col w-full mt-1 items-center justify-center h-full">
+                  <div class="relative w-[75%] border border-slate-200 rounded p-0.5 flex items-center justify-center gap-2 mb-1">
+                    <div class="absolute inset-0 border border-green-100 rounded pointer-events-none"></div>
+                    <span class="absolute top-0 right-1 text-[7px] text-green-600 font-bold bg-green-50 px-1 rounded"></span>
+                    <div class="flex items-center justify-center gap-1">
+                      <div class="w-6 h-6 bg-white border border-agentPurple rounded-full flex items-center justify-center shadow-sm relative">
+                        <span class="text-sm">🧠</span>
+                        <div class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-agentPurple rounded-full animate-ping opacity-50"></div>
+                      </div>
+                      <div class="w-3 h-0.5 bg-agentPurple"></div>
+                      <div class="w-6 h-6 bg-agentPurple text-white rounded-full flex items-center justify-center shadow-sm">
+                        <span class="text-sm animate-spin-slow">⚙️</span>
+                      </div>
+                    </div>
+                    <div class="text-xs font-bold text-agentPurple text-center leading-tight ml-1"></div>
+                  </div>
+                  <div class="w-full flex items-center justify-center gap-5 border-t border-dashed border-slate-300 pt-1.5 mt-0 channels-inside">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mr-1 hidden sm:block"></span>
+                    <div class="flex items-center gap-5"></div>
+                  </div>
+                </div>
+              </div><!-- /card-agent -->
+
+              <!-- Agentforce card 2 (duplicate) -->
+              <div class="tech-card border-2 border-agentPurple flex flex-col items-center justify-between relative bg-white group p-1.5 pt-3" id="card-agent-2" style="min-height:80px;">
+                <div class="absolute -top-4 left-3 flex items-center gap-1 bg-white px-2 py-0.5 rounded-full border border-agentPurple shadow-sm z-10">
+                  <img class="w-7 h-7 object-contain" src="" alt=""/>
+                  <span class="font-bold text-[12px] text-agentPurple pr-1"></span>
+                </div>
+                <div class="hover-tooltip tooltip-top" style="bottom:100%;width:200px;">
+                  <h4 class="font-bold border-b border-slate-600 pb-1 mb-1"></h4>
+                  <p class="mb-2"></p>
+                  <p class="mb-2"></p>
+                  <a class="text-blue-300 underline" href="" target="_blank"></a>
+                </div>
+                <div class="flex flex-col w-full mt-1 items-center justify-center h-full">
+                  <div class="relative w-[75%] border border-slate-200 rounded p-0.5 flex items-center justify-center gap-2 mb-1">
+                    <div class="absolute inset-0 border border-green-100 rounded pointer-events-none"></div>
+                    <span class="absolute top-0 right-1 text-[7px] text-green-600 font-bold bg-green-50 px-1 rounded"></span>
+                    <div class="flex items-center justify-center gap-1">
+                      <div class="w-6 h-6 bg-white border border-agentPurple rounded-full flex items-center justify-center shadow-sm relative">
+                        <span class="text-sm">🧠</span>
+                        <div class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-agentPurple rounded-full animate-ping opacity-50"></div>
+                      </div>
+                      <div class="w-3 h-0.5 bg-agentPurple"></div>
+                      <div class="w-6 h-6 bg-agentPurple text-white rounded-full flex items-center justify-center shadow-sm">
+                        <span class="text-sm animate-spin-slow">⚙️</span>
+                      </div>
+                    </div>
+                    <div class="text-xs font-bold text-agentPurple text-center leading-tight ml-1"></div>
+                  </div>
+                  <div class="w-full flex items-center justify-center gap-5 border-t border-dashed border-slate-300 pt-1.5 mt-0 channels-inside">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mr-1 hidden sm:block"></span>
+                    <div class="flex items-center gap-5"></div>
+                  </div>
+                </div>
+              </div><!-- /card-agent-2 -->
+
+            </div><!-- /agents-row -->
+
+            <!-- SF Apps bar -->
+            <div class="tech-card w-[95%] mx-auto flex flex-col items-center justify-center pt-3 pb-1 mt-2 group" id="card-sf-apps"
+                 style="background:transparent!important;border-top:2px dashed rgba(124,58,237,0.3)!important;border-bottom:none!important;border-left:none!important;border-right:none!important;border-radius:0!important;box-shadow:none!important;">
+              <div class="text-[10px] font-bold text-agentPurple uppercase tracking-widest mb-2 flex items-center gap-1">
+                <img class="w-3 h-3" src="" alt=""/>
+              </div>
+              <div class="flex flex-wrap justify-center gap-2 w-full">
+                <!-- apps injected by app.js -->
+              </div>
+            </div>
+
+            <!-- Agent channels (outside pill row) -->
+            <div class="agent-channels-outside" id="agentChannelsOutside">
+              <!-- injected by app.js -->
+            </div>
+
+          </div><!-- /shelf-bottom -->
+
+        </div><!-- /shelf-container -->
+      </div><!-- /visual-column -->
+
+    </div><!-- /scrolly-container -->
+  </div><!-- /story-screen -->
+
+</div><!-- /app-shell -->
+
+<!-- Content first, then app logic -->
+<script src="js/content.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
