@@ -49,7 +49,7 @@ window.CONTENT = {
           }
         ],
         "body": "<strong>Connect, Integrate, Understand.</strong> Making data available and understandable where it's needed across APIs, apps, and legacy systems.",
-        "logoTags": []
+        "logoTag": ""
       },
       {
         "title": "2) Trust",
@@ -60,7 +60,7 @@ window.CONTENT = {
           }
         ],
         "body": "<strong>Validate, Protect, Unify.</strong> Making data accurate, consistent, and defensible. <strong>Informatica</strong> governs and masters customer data to establish a trusted \"Golden Record.\"",
-        "logoTags": []
+        "logoTag": ""
       },
       {
         "title": "3) Activate",
@@ -74,7 +74,7 @@ window.CONTENT = {
             "alt": "MuleSoft logo"
           }
         ],
-        "logoTags": ["Data 360", "Agent Fabric"],
+        "logoTag": "Data 360 & Agent Fabric",
         "body": "<strong>Decide, Orchestrate, Act.</strong> Using trusted data to drive outcomes. <strong>Salesforce Data 360</strong> , <strong>Agentforce</strong> and <strong>Agent Fabric</strong> turn context into autonomous decisions in the flow of work."
       }
     ],
@@ -208,12 +208,13 @@ window.CONTENT = {
         ]
       },
       "robertStory": {
-        "title": "Robert's Story: Orchestrating Order‑to‑Cash",
-        "intro": "A Sales Rep closes a $50k deal for <strong>Robert Smith</strong>. MuleSoft orchestrates the steps across systems using APIs — while each application stays unchanged.",
+        "title": "Robert's Story: Orchestrating a Weather Delay Incident",
+        "intro": "A weather event disrupts <strong>Robert Smith's</strong> active shipments on the Toronto to Montreal corridor. MuleSoft orchestrates the response across CN's systems using APIs — while each application stays unchanged.",
         "items": [
-          "<strong>Legacy check (IBM):</strong> an API fetches Robert's 20‑year VIP status and entitlement rules.",
-          "<strong>ERP fulfillment (SAP):</strong> the order is routed to the correct account using the mastered ID (E‑999).",
-          "<strong>Salesforce update:</strong> the customer timeline is updated so every team sees the same outcome."
+          "<strong>Shipment history (IBM Mainframe):</strong> An API retrieves Robert's VIP Shipper status and all active shipments on the impacted route.",
+          "<strong>Incident management (Service Cloud):</strong> A delay ticket is opened and linked to the correct shipper record automatically.",
+          "<strong>Targeted communications (Marketing Cloud):</strong> Targeted Alerts  -  These alerts are exclusively for Shippers within the Toronto-Montreal route, ensuring relevant communication instead of a general broadcast.",
+          "<strong>Outcome visibility (Salesforce CRM):</strong> Sales and service teams see real-time delay status instantly. One view, every team."
         ]
       },
       "subtitle": ""
@@ -368,14 +369,14 @@ window.CONTENT = {
     {
       "id": "src-snow",
       "borderClass": "border-green-600",
-      "label": "Service Cloud",
-      "icon": "https://cdn.brandfetch.io/salesforce.com?c=1idycWZwgN4U02bYNNr",
-      "iconAlt": "Service Cloud logo",
-      "badge": "Holds: Tickets",
+      "label": "Databricks",
+      "icon": "https://cdn.brandfetch.io/databricks.com?c=1idycWZwgN4U02bYNNr",
+      "iconAlt": "Databricks",
+      "badge": "Holds: Shipment Events",
       "eid": "ID: 202",
       "tooltip": {
-        "title": "Service Cloud",
-        "body": "Service Management platform handling support tickets and workflows."
+        "title": "Databricks",
+        "body": "Databricks platform contains Shipment Events."
       }
     },
     {
@@ -532,7 +533,7 @@ window.CONTENT = {
         "id": "g-sap",
         "icon": "https://cdn.brandfetch.io/sap.com?c=1idycWZwgN4U02bYNNr",
         "tableHead": "Inv#99",
-        "style": "top: 15%; left: 50%; transform: translateX(-50%);",
+        "style": "top: 30%; left: 3%;",
         "iconAlt": ""
       },
       {
@@ -545,13 +546,13 @@ window.CONTENT = {
       {
         "id": "g-mkto",
         "icon": "https://cdn.brandfetch.io/salesforce.com?c=1idycWZwgN4U02bYNNr",
-        "tableHead": "Clicks",
+        "tableHead": "Incident Comms",
         "style": "bottom: 30%; left: 5%;",
         "iconAlt": ""
       },
       {
         "id": "g-snow",
-        "icon": "https://cdn.brandfetch.io/servicenow.com?c=1idycWZwgN4U02bYNNr",
+        "icon": "https://cdn.brandfetch.io/databricks.com?c=1idycWZwgN4U02bYNNr",
         "tableHead": "Tkt#202",
         "style": "bottom: 15%; right: 20%;",
         "iconAlt": ""
@@ -611,7 +612,7 @@ window.CONTENT = {
   "sfApps": {
     "icon": "https://cdn.brandfetch.io/salesforce.com?c=1idycWZwgN4U02bYNNr",
     "iconAlt": "Salesforce logo",
-    "label": "Salesforce Customer 360 Apps & other CN Apps",
+    "label": "Salesforce Customer 360 Apps",
     "apps": [
       {
         "icon": "☁️",
@@ -651,8 +652,6 @@ window.CONTENT = {
     }
   }
 };
-
-
 
 
 
