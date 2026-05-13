@@ -68,8 +68,8 @@
       pillar.logos.forEach(logo => {
         logoRow.appendChild(el("img", { src: logo.src, alt: logo.alt }));
       });
-      (pillar.logoTags || (pillar.logoTag ? [pillar.logoTag] : [])).forEach(tag => {
-        logoRow.appendChild(el("span", { className: "intro-logo-tag" }, tag));
+      (pillar.logoTags || (pillar.logoTag ? pillar.logoTag.split(' & ') : [])).forEach(tag => {
+        logoRow.appendChild(el("span", { className: "intro-logo-tag" }, tag.trim()));
       });
       pillarsEl.appendChild(
         el("div", { className: "intro-pillar" },

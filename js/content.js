@@ -49,7 +49,7 @@ window.CONTENT = {
           }
         ],
         "body": "<strong>Connect, Integrate, Understand.</strong> Making data available and understandable where it's needed across APIs, apps, and legacy systems.",
-        "logoTag": ""
+        "logoTags": []
       },
       {
         "title": "2) Trust",
@@ -60,7 +60,7 @@ window.CONTENT = {
           }
         ],
         "body": "<strong>Validate, Protect, Unify.</strong> Making data accurate, consistent, and defensible. <strong>Informatica</strong> governs and masters customer data to establish a trusted \"Golden Record.\"",
-        "logoTag": ""
+        "logoTags": []
       },
       {
         "title": "3) Activate",
@@ -74,7 +74,7 @@ window.CONTENT = {
             "alt": "MuleSoft logo"
           }
         ],
-        "logoTag": "Data 360 & Agent Fabric",
+        "logoTags": ["Data 360", "Agent Fabric"],
         "body": "<strong>Decide, Orchestrate, Act.</strong> Using trusted data to drive outcomes. <strong>Salesforce Data 360</strong> , <strong>Agentforce</strong> and <strong>Agent Fabric</strong> turn context into autonomous decisions in the flow of work."
       }
     ],
