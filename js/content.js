@@ -612,7 +612,7 @@ window.CONTENT = {
   "sfApps": {
     "icon": "https://cdn.brandfetch.io/salesforce.com?c=1idycWZwgN4U02bYNNr",
     "iconAlt": "Salesforce logo",
-    "label": "Salesforce Customer 360 Apps",
+    "label": "SALESFORCE CUSTOMER 360 APPS AND OTHER CN APPS",
     "apps": [
       {
         "icon": "☁️",
