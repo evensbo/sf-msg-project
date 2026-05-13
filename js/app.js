@@ -370,6 +370,12 @@
     if (mdmCard) {
       const badge = mdmCard.querySelector(".absolute.-top-3");
       if (badge) badge.textContent = dm.mdm.hubLabel;
+      const tipTitle = mdmCard.querySelector(".hover-tooltip h4");
+      if (tipTitle) tipTitle.textContent = dm.mdm.tooltip.title;
+      const mdmWhat = document.getElementById("mdm-what");
+      if (mdmWhat) mdmWhat.textContent = dm.mdm.tooltip.what;
+      const mdmFunc = document.getElementById("mdm-func");
+      if (mdmFunc) mdmFunc.textContent = dm.mdm.tooltip.func;
     }
 
     /* pipeline steps */
